@@ -1,7 +1,8 @@
 {
-  "name": "app",
-  "version": "0.1.0",
+  "name": "hmapp",
+  "version": "5.0.0",
   "private": true,
+  "description": "Handyman Marketplace Application - Connecting customers with skilled technicians",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,6 +10,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.84.0",
     "next": "16.0.4",
     "react": "19.2.0",
     "react-dom": "19.2.0"
