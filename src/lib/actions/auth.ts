@@ -142,14 +142,20 @@ export async function registerCustomerAction(formData: CustomerRegisterFormData)
     const { data: registerData, error: registerError } = await supabase.rpc('register_customer', {
       p_user_id: authData.user.id,
       p_full_name: validated.data.fullName,
-      p_phone: validated.data.phone || undefined,
+      p_phone: validated.data.phone ?? undefined,
       p_email: validated.data.email
     })
 
     if (registerError) {
       console.error('Register customer error:', registerError)
-      // Try to clean up auth user if profile creation fails
-      return { success: false, message: registerError.message }
+      // User created in Auth but profile creation failed
+      // In production, you might want to delete the auth user here
+      return { 
+        success: false, 
+        message: registerError.message.includes('already registered') 
+          ? 'هذا الحساب مسجل مسبقاً' 
+          : 'فشل في إنشاء الملف الشخصي. حاول مرة أخرى'
+      }
     }
 
     return {
@@ -211,13 +217,18 @@ export async function registerCompanyAction(formData: CompanyRegisterFormData): 
       p_company_name: validated.data.companyName,
       p_phone: validated.data.phone,
       p_email: validated.data.email,
-      p_commercial_register: validated.data.commercialRegister || undefined,
-      p_city: validated.data.city || undefined
+      p_commercial_register: validated.data.commercialRegister ?? undefined,
+      p_city: validated.data.city ?? undefined
     })
 
     if (registerError) {
       console.error('Register company error:', registerError)
-      return { success: false, message: registerError.message }
+      return { 
+        success: false, 
+        message: registerError.message.includes('already registered') 
+          ? 'هذا الحساب مسجل مسبقاً' 
+          : 'فشل في إنشاء حساب الشركة. حاول مرة أخرى'
+      }
     }
 
     return {
@@ -279,7 +290,7 @@ export async function registerTechnicianAction(formData: TechnicianRegisterFormD
       p_phone: validated.data.phone,
       p_company_id: validated.data.companyId,
       p_email: validated.data.email,
-      p_specialization: validated.data.specialization || undefined
+      p_specialization: validated.data.specialization ?? undefined
     })
 
     if (registerError) {
@@ -287,7 +298,10 @@ export async function registerTechnicianAction(formData: TechnicianRegisterFormD
       if (registerError.message.includes('Company not found')) {
         return { success: false, message: 'الشركة غير موجودة أو غير نشطة' }
       }
-      return { success: false, message: registerError.message }
+      if (registerError.message.includes('already registered')) {
+        return { success: false, message: 'هذا الحساب مسجل مسبقاً' }
+      }
+      return { success: false, message: 'فشل في إنشاء حساب الفني. حاول مرة أخرى' }
     }
 
     return {

@@ -13,7 +13,7 @@ export const loginSchema = z.object({
   password: z
     .string()
     .min(1, 'كلمة المرور مطلوبة')
-    .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+    .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
@@ -35,7 +35,7 @@ export const customerRegisterSchema = z.object({
   password: z
     .string()
     .min(1, 'كلمة المرور مطلوبة')
-    .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+    .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
   confirmPassword: z
     .string()
     .min(1, 'تأكيد كلمة المرور مطلوب'),
@@ -73,7 +73,7 @@ export const companyRegisterSchema = z.object({
   password: z
     .string()
     .min(1, 'كلمة المرور مطلوبة')
-    .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+    .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
   confirmPassword: z
     .string()
     .min(1, 'تأكيد كلمة المرور مطلوب'),
@@ -108,7 +108,7 @@ export const technicianRegisterSchema = z.object({
   password: z
     .string()
     .min(1, 'كلمة المرور مطلوبة')
-    .min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+    .min(8, 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'),
   confirmPassword: z
     .string()
     .min(1, 'تأكيد كلمة المرور مطلوب'),

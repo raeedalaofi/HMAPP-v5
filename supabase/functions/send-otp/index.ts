@@ -59,7 +59,7 @@ serve(async (req) => {
         throw new Error('Failed to send SMS')
       }
 
-      console.log(`OTP sent to phone: ${target.substring(0, 6)}***`)
+      // OTP sent successfully to phone
 
     } else if (target_type === 'email') {
       // Send email via Resend or similar
@@ -101,7 +101,7 @@ serve(async (req) => {
         throw new Error('Failed to send email')
       }
 
-      console.log(`OTP sent to email: ${target.substring(0, 3)}***`)
+      // OTP sent successfully to email
     }
 
     return new Response(
