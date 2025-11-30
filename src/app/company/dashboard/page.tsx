@@ -6,6 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Users, Briefcase, Wallet, Plus, Settings, CreditCard, FileText, UserCog } from 'lucide-react'
 
+interface CompanyStats {
+  company: {
+    name: string
+  }
+  stats: {
+    total_technicians: number
+    active_technicians: number
+    total_revenue: number
+    completed_jobs: number
+    total_jobs: number
+  }
+}
+
 export const metadata: Metadata = {
   title: 'لوحة تحكم الشركة | HMAPP',
   description: 'ملخص أداء الشركة وإدارة الفنيين',
@@ -33,7 +46,7 @@ export default async function CompanyDashboardPage() {
   }
 
   // 3. Parse Data (Safe Defaults)
-  const stats = statsData as any
+  const stats = statsData as unknown as CompanyStats
   const ownerName = user.user_metadata?.full_name || 'المالك'
   const companyName = stats?.company?.name || ''
   

@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Role to route mapping
 const roleRouteMap: Record<string, string> = {
-  customer: '/customer/home',
-  technician: '/technician/dashboard',
+  customer: '/customer',
+  technician: '/technician',
   company_owner: '/company/dashboard',
   admin: '/admin/dashboard',
   super_admin: '/admin/dashboard',

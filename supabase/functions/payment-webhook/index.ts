@@ -42,6 +42,8 @@ serve(async (req) => {
     const signature = req.headers.get('x-moyasar-signature')
     const webhookSecret = Deno.env.get('PAYMENT_WEBHOOK_SECRET')
     
+    let payload: PaymentWebhookPayload
+
     if (webhookSecret && signature) {
       // Verify HMAC signature
       const body = await req.text()
@@ -71,10 +73,10 @@ serve(async (req) => {
       }
       
       // Parse verified body
-      var payload = JSON.parse(body) as PaymentWebhookPayload
+      payload = JSON.parse(body) as PaymentWebhookPayload
     } else {
       // No signature verification (development mode)
-      var payload = await req.json() as PaymentWebhookPayload
+      payload = await req.json() as PaymentWebhookPayload
     }
 
     console.log('Payment webhook received:', payload.type, payload.id)
