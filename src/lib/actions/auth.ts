@@ -1,5 +1,6 @@
 'use server'
 
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { 
@@ -174,72 +175,94 @@ export async function registerCustomerAction(formData: CustomerRegisterFormData)
 // Company Registration Action
 // ============================================
 export async function registerCompanyAction(formData: CompanyRegisterFormData): Promise<AuthResult> {
+  console.log("🚀 Started Company Registration Action"); // Log 1
+
   try {
-    // Validate input
+    // 1. التحقق من صحة البيانات
     const validated = companyRegisterSchema.safeParse(formData)
     if (!validated.success) {
+      console.log("❌ Validation Failed", validated.error);
       return {
         success: false,
         message: validated.error.issues[0]?.message || 'بيانات غير صحيحة'
       }
     }
 
-    const supabase = await createClient()
-    
-    // 1. Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 2. إنشاء عميل Supabase بصلاحيات الأدمن (Service Role)
+    // نستخدم هذا المفتاح لضمان القدرة على الكتابة في الجداول بغض النظر عن الـ RLS
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    // 3. إنشاء المستخدم في Auth (باستخدام الأدمن لضمان الإنشاء)
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: validated.data.email,
       password: validated.data.password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify`,
-        data: {
-          full_name: validated.data.ownerName,
-          user_type: 'company_owner'
-        }
+      email_confirm: true, // تفعيل البريد تلقائياً لتسهيل التجربة، يمكنك تغييرها لـ false لاحقاً
+      user_metadata: {
+        full_name: validated.data.ownerName,
+        user_type: 'company_owner'
       }
     })
 
     if (authError) {
-      if (authError.message.includes('already registered')) {
-        return { success: false, message: 'البريد الإلكتروني مسجل مسبقاً' }
+      console.error("❌ Auth Error:", authError);
+      return { 
+        success: false, 
+        message: authError.message.includes('already registered') 
+          ? 'البريد الإلكتروني مسجل مسبقاً' 
+          : 'فشل في إنشاء الحساب'
       }
-      return { success: false, message: authError.message }
     }
 
     if (!authData.user) {
-      return { success: false, message: 'فشل في إنشاء الحساب' }
+      return { success: false, message: 'فشل في استرجاع بيانات المستخدم' }
     }
 
-    // 2. Call register_company RPC
-    const { data: registerData, error: registerError } = await supabase.rpc('register_company', {
+    console.log("✅ User Created:", authData.user.id);
+
+    // 4. استدعاء دالة RPC لتسجيل الشركة
+    // نستخدم supabaseAdmin هنا أيضاً
+    const { data: registerData, error: registerError } = await supabaseAdmin.rpc('register_company', {
       p_user_id: authData.user.id,
       p_owner_name: validated.data.ownerName,
       p_company_name: validated.data.companyName,
       p_phone: validated.data.phone,
       p_email: validated.data.email,
       p_commercial_register: validated.data.commercialRegister ?? undefined,
-      p_city: validated.data.city ?? undefined
+      p_city: validated.data.city ?? undefined // تأكد أن الباراميتر هذا موجود في الدالة في قاعدة البيانات
     })
 
     if (registerError) {
-      console.error('Register company error:', registerError)
-      return { 
-        success: false, 
-        message: registerError.message.includes('already registered') 
-          ? 'هذا الحساب مسجل مسبقاً' 
-          : 'فشل في إنشاء حساب الشركة. حاول مرة أخرى'
+      console.error('❌ RPC Error (register_company):', registerError)
+      
+      // تنظيف: نحذف اليوزر إذا فشل إنشاء الشركة لمنع البيانات اليتيمة
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+      
+      return {
+        success: false,
+        message: 'فشل في تسجيل بيانات الشركة. تأكد من أن رقم السجل التجاري غير مستخدم.'
       }
     }
 
+    console.log("✅ Company Registered Successfully!");
+
     return {
       success: true,
-      message: 'تم تسجيل الشركة بنجاح! سيتم مراجعة طلبك خلال 24 ساعة',
+      message: 'تم تسجيل الشركة بنجاح! جاري التوجيه...',
       data: registerData as Record<string, unknown>
     }
 
   } catch (error) {
-    console.error('Company registration error:', error)
-    return { success: false, message: 'حدث خطأ غير متوقع' }
+    console.error('🔥 Unexpected Error:', error)
+    return { success: false, message: 'حدث خطأ غير متوقع في النظام' }
   }
 }
 
